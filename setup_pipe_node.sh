@@ -106,11 +106,11 @@ echo "    - Директории созданы."
 
 # Перемещение и проверка бинарного файла
 # --- Новый блок: Поиск и распаковка архива, если найден ---
-echo "2.2 Поиск и подготовка бинарного файла '$BINARY_NAME' или архива pop-v*.tar.gz..."
-ARCHIVE_PATH=$(find /home /root -name "pop-v*.tar.gz" -type f -print -quit)
+echo "2.2 Поиск и подготовка бинарного файла '<span class="math-inline">BINARY\_NAME' или архива pop\-v\*\.tar\.gz\.\.\."
+ARCHIVE\_PATH\=</span>(find /home /root -name "pop-v*.tar.gz" -type f -print -quit)
 if [[ -n "$ARCHIVE_PATH" ]]; then
-    echo "    - Найден архив: $ARCHIVE_PATH"
-    TMP_UNPACK_DIR="/tmp/pop_unpack_$$"
+    echo "    - Найден архив: <span class="math-inline">ARCHIVE\_PATH"
+TMP\_UNPACK\_DIR\="/tmp/pop\_unpack\_</span>$"
     mkdir -p "$TMP_UNPACK_DIR"
     tar -xzf "$ARCHIVE_PATH" -C "$TMP_UNPACK_DIR"
     if [[ ! -f "$TMP_UNPACK_DIR/$BINARY_NAME" ]]; then
@@ -126,10 +126,10 @@ if [[ -n "$ARCHIVE_PATH" ]]; then
     fi
     chmod +x "$INSTALL_DIR/$BINARY_NAME"
     rm -rf "$TMP_UNPACK_DIR"
-    echo "    - Бинарный файл извлечён из архива и перемещён в $INSTALL_DIR/$BINARY_NAME."
+    echo "    - Бинарный файл извлечён из архива и перемещён в $INSTALL_DIR/<span class="math-inline">BINARY\_NAME\."
 else
-    # --- Старый блок: Поиск готового бинарника ---
-    BINARY_PATH=$(find /home /root -name "$BINARY_NAME" -type f -print -quit) # Ищем в /home и /root
+\# \-\-\- Старый блок\: Поиск готового бинарника \-\-\-
+BINARY\_PATH\=</span>(find /home /root -name "$BINARY_NAME" -type f -print -quit) # Ищем в /home и /root
     if [[ -z "$BINARY_PATH" ]]; then
         echo "[ОШИБКА] Ни архив pop-v*.tar.gz, ни бинарный файл '$BINARY_NAME' не найдены в /home или /root."
         echo "Пожалуйста, скачайте архив с https://download.pipe.network/ и поместите на сервер."
@@ -142,48 +142,56 @@ else
         exit 1
     fi
     chmod +x "$INSTALL_DIR/$BINARY_NAME"
-    echo "    - Бинарный файл перемещён в $INSTALL_DIR/$BINARY_NAME и сделан исполняемым."
+    echo "    - Бинарный файл перемещён в $INSTALL_DIR/<span class="math-inline">BINARY\_NAME и сделан исполняемым\."
 fi
-
-echo "--- Шаг 2 Завершен ---"
-
-# --- 3. Конфигурация ---
+echo "\-\-\- Шаг 2 Завершен \-\-\-"
+\# \-\-\- 3\. Конфигурация \-\-\-
 echo ""
-echo "--- Шаг 3: Конфигурация (config.json) ---"
-echo "Сейчас вам нужно будет ввести данные для конфигурационного файла."
-echo "Некоторые значения имеют рекомендации."
-
+echo "\-\-\- Шаг 3\: Конфигурация \(config\.json\) \-\-\-"
+echo "Сейчас вам нужно будет ввести данные для конфигурационного файла\."
+echo "Некоторые значения имеют рекомендации\."
+\# Значения по умолчанию на случай сбоя ввода
+DEFAULT\_POP\_NAME\="default\-pop"
+DEFAULT\_POP\_LOCATION\="Unknown"
+DEFAULT\_MEMORY\_CACHE\_SIZE\_MB\=4096
+DEFAULT\_DISK\_CACHE\_SIZE\_GB\=100
+DEFAULT\_WORKERS\=0
+DEFAULT\_NODE\_NAME\="default\-node"
+DEFAULT\_IDENTITY\_NAME\="Default User"
+DEFAULT\_IDENTITY\_EMAIL\="default@example\.com"
+DEFAULT\_IDENTITY\_WEBSITE\=""
+DEFAULT\_IDENTITY\_DISCORD\=""
+DEFAULT\_IDENTITY\_TELEGRAM\=""
+DEFAULT\_IDENTITY\_SOLANA\_PUBKEY\=""
 while true; do
-    # Запрос данных у пользователя
-    read -p "Введите имя вашего POP (pop_name, например, my-frankfurt-pop): " pop_name
-    read -p "Введите локацию вашего POP (pop_location, например, Frankfurt, Germany): " pop_location
-
-    # Получаем RAM в МБ и Диск в ГБ для рекомендаций
-    TOTAL_RAM_MB=$(grep MemTotal /proc/meminfo | awk '{print int($2/1024)}')
-    AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
+\# Запрос данных у пользователя
+read \-p "Введите имя вашего POP \(pop\_name, например, my\-frankfurt\-pop\)\: " user\_pop\_name
+read \-p "Введите локацию вашего POP \(pop\_location, например, Frankfurt, Germany\)\: " user\_pop\_location
+\# Получаем RAM в МБ и Диск в ГБ для рекомендаций
+TOTAL\_RAM\_MB\=</span>(grep MemTotal /proc/meminfo | awk '{print int(<span class="math-inline">2/1024\)\}'\)
+AVAIL\_DISK\_GB\=</span>(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
 
     echo "Рекомендации по памяти (RAM: ${TOTAL_RAM_MB}MB):"
     echo "  - Установите 50-70% от доступной RAM."
     echo "  - Например, для 16GB (16384MB) RAM, установите 8192-11468 MB."
-    read -p "Размер кэша в памяти (memory_cache_size_mb): " memory_cache_size_mb
+    read -p "Размер кэша в памяти (memory_cache_size_mb): " user_memory_cache_size_mb
 
-    echo "Рекомендации по диску (Доступно: ${AVAIL_DISK_GB}GB в $INSTALL_DIR):"
-    echo "  - Оставьте как минимум 20% свободного места на диске."
-    echo "  - Например, для 500GB диска, установите 350-400 GB."
-    read -p "Размер дискового кэша (disk_cache_size_gb): " disk_cache_size_gb
+    echo "Рекомендации по диску (Доступно: ${AVAIL_DISK_GB}GB в <span class="math-inline">INSTALL\_DIR\)\:"
+echo "  \- Оставьте как минимум 20% свободного места на диске\."
+echo "  \- Например, для 500GB диска, установите 350\-400 GB\."
+read \-p "Размер дискового кэша \(disk\_cache\_size\_gb\)\: " user\_disk\_cache\_size\_gb
+read \-p "Количество воркеров \(workers, 0\=автоопределение по CPU, рекомендуется\)\: " user\_workers
+user\_workers\=</span>{user_workers:-0}
 
-    read -p "Количество воркеров (workers, 0=автоопределение по CPU, рекомендуется): " workers
-    workers=${workers:-0}
-
-    read -p "Имя узла для идентификации (identity_config.node_name): " identity_node_name
-    read -p "Ваше имя или название компании (identity_config.name): " identity_name
-    read -p "Ваш контактный email (identity_config.email): " identity_email
-    read -p "Ваш вебсайт (identity_config.website, можно оставить пустым): " identity_website
-    read -p "Ваш Discord username (identity_config.discord, можно оставить пустым): " identity_discord
-    read -p "Ваш Telegram handle (identity_config.telegram, можно оставить пустым): " identity_telegram
+    read -p "Имя узла для идентификации (identity_config.node_name): " user_identity_node_name
+    read -p "Ваше имя или название компании (identity_config.name): " user_identity_name
+    read -p "Ваш контактный email (identity_config.email): " user_identity_email
+    read -p "Ваш вебсайт (identity_config.website, можно оставить пустым): " user_identity_website
+    read -p "Ваш Discord username (identity_config.discord, можно оставить пустым): " user_identity_discord
+    read -p "Ваш Telegram handle (identity_config.telegram, можно оставить пустым): " user_identity_telegram
     while true; do
-        read -p "Ваш Solana адрес для наград (identity_config.solana_pubkey, ОБЯЗАТЕЛЬНО): " identity_solana_pubkey
-        if [[ -z "$identity_solana_pubkey" ]]; then
+        read -p "Ваш Solana адрес для наград (identity_config.solana_pubkey, ОБЯЗАТЕЛЬНО): " user_identity_solana_pubkey
+        if [[ -z "$user_identity_solana_pubkey" ]]; then
             echo "   [ОШИБКА] Solana адрес обязателен для получения наград."
         else
             break
@@ -192,35 +200,35 @@ while true; do
 
     # Создание config.json
     echo "3.1 Создание файла конфигурации $CONFIG_FILE..."
-    cat > "$CONFIG_FILE" << EOL
-{
-  "pop_name": "$pop_name",
-  "pop_location": "$pop_location",
+    cat > "<span class="math-inline">CONFIG\_FILE" << EOL
+\{
+"pop\_name"\: "</span>{user_pop_name:-"<span class="math-inline">DEFAULT\_POP\_NAME"\}",
+"pop\_location"\: "</span>{user_pop_location:-"$DEFAULT_POP_LOCATION"}",
   "server": {
     "host": "0.0.0.0",
     "port": 443,
     "http_port": 80,
-    "workers": $workers
+    "workers": ${user_workers:-"$DEFAULT_WORKERS"}
   },
   "cache_config": {
-    "memory_cache_size_mb": $memory_cache_size_mb,
+    "memory_cache_size_mb": ${user_memory_cache_size_mb:-"$DEFAULT_MEMORY_CACHE_SIZE_MB"},
     "disk_cache_path": "$CACHE_DIR",
-    "disk_cache_size_gb": $disk_cache_size_gb,
-    "default_ttl_seconds": 86400,
-    "respect_origin_headers": true,
-    "max_cacheable_size_mb": 1024
-  },
-  "api_endpoints": {
-    "base_url": "https://dataplane.pipenetwork.com"
-  },
-  "identity_config": {
-    "node_name": "$identity_node_name",
-    "name": "$identity_name",
-    "email": "$identity_email",
-    "website": "$identity_website",
-    "discord": "$identity_discord",
-    "telegram": "$identity_telegram",
-    "solana_pubkey": "$identity_solana_pubkey"
+    "disk_cache_size_gb": ${user_disk_cache_size_gb:-"<span class="math-inline">DEFAULT\_DISK\_CACHE\_SIZE\_GB"\},
+"default\_ttl\_seconds"\: 86400,
+"respect\_origin\_headers"\: true,
+"max\_cacheable\_size\_mb"\: 1024
+\},
+"api\_endpoints"\: \{
+"base\_url"\: "https\://dataplane\.pipenetwork\.com"
+\},
+"identity\_config"\: \{
+"node\_name"\: "</span>{user_identity_node_name:-"<span class="math-inline">DEFAULT\_NODE\_NAME"\}",
+"name"\: "</span>{user_identity_name:-"<span class="math-inline">DEFAULT\_IDENTITY\_NAME"\}",
+"email"\: "</span>{user_identity_email:-"<span class="math-inline">DEFAULT\_IDENTITY\_EMAIL"\}",
+"website"\: "</span>{user_identity_website:-"<span class="math-inline">DEFAULT\_IDENTITY\_WEBSITE"\}",
+"discord"\: "</span>{user_identity_discord:-"<span class="math-inline">DEFAULT\_IDENTITY\_DISCORD"\}",
+"telegram"\: "</span>{user_identity_telegram:-"$DEFAULT_IDENTITY_TELEGRAM"}",
+    "solana_pubkey": "$user_identity_solana_pubkey"
   }
 }
 EOL
@@ -232,7 +240,7 @@ EOL
     if [ $? -ne 0 ]; then
         echo "[ПРЕДУПРЕЖДЕНИЕ] Валидация конфигурации не удалась. Проверьте $CONFIG_FILE и вывод выше."
         read -p "Повторить ввод всех параметров? (y/N): " confirm_validation
-        if [[ "$confirm_validation" =~ ^[Yy]$ ]]; then
+        if [[ "<span class="math-inline">confirm\_validation" \=\~ ^\[Yy\]</span> ]]; then
             continue
         else
             echo "Установка прервана для исправления конфигурации."
@@ -314,87 +322,3 @@ $LOG_DIR/*.log {
     delaycompress
     notifempty
     create 0640 $NODE_USER $NODE_GROUP
-    sharedscripts
-    postrotate
-        systemctl kill -s HUP popcache >/dev/null 2>&1 || true
-    endscript
-}
-EOL
-# Примечание: Используем kill -s HUP вместо reload, так как сервис может не поддерживать reload
-# и HUP чаще используется для переоткрытия лог-файлов.
-echo "    - Файл logrotate создан."
-
-echo "--- Шаг 5 Завершен ---"
-
-# --- 6. Настройка Firewall (Инструкции) ---
-echo ""
-echo "--- Шаг 6: Настройка Firewall (Инструкции) ---"
-echo "Не забудьте открыть порты 80 (HTTP) и 443 (HTTPS) в вашем firewall."
-echo "Примеры команд:"
-echo "  Если используете UFW:"
-echo "    sudo ufw allow 80/tcp"
-echo "    sudo ufw allow 443/tcp"
-echo "    sudo ufw enable # Если UFW не был включен"
-echo "    sudo ufw status"
-echo ""
-echo "  Если используете iptables (пример, может потребовать адаптации и сохранения правил):"
-echo "    sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT"
-echo "    sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT"
-echo "    # Команда для сохранения правил зависит от дистрибутива (iptables-save, netfilter-persistent)"
-echo ""
-
-# --- Завершение ---
-echo ""
-echo "--- Установка POP Cache Node завершена! ---"
-echo ""
-
-# Попытка определить публичный IP адрес для команд мониторинга
-echo "Определение публичного IP адреса сервера..."
-# Проверяем наличие curl
-if command -v curl &> /dev/null; then
-    # Используем сервис для определения IP, таймаут 5 секунд
-    PUBLIC_IP=$(curl -s --max-time 5 ifconfig.me) # Альтернативы: api.ipify.org, ipinfo.io/ip
-fi
-
-# Простая проверка, похож ли результат на IPv4 адрес
-if [[ -z "$PUBLIC_IP" || ! "$PUBLIC_IP" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  echo "[ПРЕДУПРЕЖДЕНИЕ] Не удалось автоматически определить публичный IP адрес."
-  # Попытка получить IP через hostname -I, берем первый адрес
-  INTERNAL_IP=$(hostname -I | awk '{print $1}')
-  if [[ -n "$INTERNAL_IP" && "$INTERNAL_IP" != "127.0.0.1" ]]; then
-      echo "Используется первый IP адрес интерфейса '$INTERNAL_IP' для примеров команд мониторинга."
-      MONITORING_HOST="$INTERNAL_IP"
-  else
-      echo "Используется 'localhost' для примеров команд мониторинга."
-      MONITORING_HOST="localhost"
-  fi
-else
-  echo "Обнаружен публичный IP: $PUBLIC_IP"
-  MONITORING_HOST="$PUBLIC_IP"
-fi
-echo ""
-
-
-echo "Основные команды для управления сервисом:"
-echo "  - Проверить статус: sudo systemctl status popcache"
-echo "  - Остановить сервис: sudo systemctl stop popcache"
-echo "  - Запустить сервис: sudo systemctl start popcache"
-echo "  - Перезапустить сервис: sudo systemctl restart popcache"
-echo "  - Посмотреть последние логи сервиса: sudo journalctl -u popcache -f -n 100"
-echo "  - Посмотреть логи приложения:"
-echo "      tail -f $LOG_DIR/stdout.log"
-echo "      tail -f $LOG_DIR/stderr.log"
-echo ""
-echo "Команды для мониторинга (вы можете использовать определенный IP или localhost):"
-echo "  - curl http://$MONITORING_HOST/state"
-echo "  - curl http://$MONITORING_HOST/metrics"
-echo "  - curl http://$MONITORING_HOST/health"
-# Дополнительно покажем с localhost, так как он всегда должен работать с самого сервера
-if [[ "$MONITORING_HOST" != "localhost" ]]; then
-    echo "  (или локально: curl http://localhost/state )"
-fi
-echo ""
-echo "Убедитесь, что вы открыли порты 80 и 443 в вашем Firewall для доступа извне!"
-echo ""
-
-exit 0
