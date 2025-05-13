@@ -377,7 +377,7 @@ echo ""
 echo "--- Шаг 5: Настройка ротации логов ---"
 
 echo "5.1 Создание файла конфигурации logrotate ($LOGROTATE_FILE)..."
-cat > "$LOGROTATE_FILE" << EOL
+cat > "$LOGROTATE_FILE" << 'EOL'
 $LOG_DIR/*.log {
     daily
     missingok
@@ -386,3 +386,9 @@ $LOG_DIR/*.log {
     delaycompress
     notifempty
     create 0640 $NODE_USER $NODE_GROUP
+    sharedscripts
+    postrotate
+        systemctl reload popcache >/dev/null 2>&1 || true
+    endscript
+}
+EOL
