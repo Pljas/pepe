@@ -169,9 +169,9 @@ DEFAULT_WORKERS=40
 DEFAULT_NODE_NAME="your-node-name"
 DEFAULT_IDENTITY_NAME="Your Name"
 DEFAULT_IDENTITY_EMAIL="your.email@example.com"
-DEFAULT_IDENTITY_WEBSITE="https://your-website.com"
-DEFAULT_IDENTITY_DISCORD="your_discord_username"
-DEFAULT_IDENTITY_TELEGRAM="your_telegram_handle"
+DEFAULT_IDENTITY_WEBSITE=""
+DEFAULT_IDENTITY_DISCORD=""
+DEFAULT_IDENTITY_TELEGRAM=""
 DEFAULT_IDENTITY_SOLANA_PUBKEY="YOUR_SOLANA_WALLET_ADDRESS_FOR_REWARDS"
 while true; do
 # Запрос данных у пользователя
@@ -181,7 +181,7 @@ read -p "Введите локацию вашего POP (pop_location, напр�
 TOTAL_RAM_MB=$(grep MemTotal /proc/meminfo | awk '{print int($2/1024)}')
 AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
 
-    echo "Рекомендации по памяти (RAM: ${TOTAL_RAM_MB}MB):"
+    echo "Рекомендации по памяти (Доступно RAM: ${TOTAL_RAM_MB}MB):"
     echo "  - Установите 50-70% от доступной RAM."
     echo "  - Например, для 16GB (16384MB) RAM, установите 8192-11468 MB."
     read -p "Размер кэша в памяти (memory_cache_size_mb): " user_memory_cache_size_mb
