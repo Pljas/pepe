@@ -106,19 +106,27 @@ echo "    - Директории созданы."
 
 # Перемещение и проверка бинарного файла
 # --- Новый блок: Поиск и распаковка архива, если найден ---
-echo "2.2 Поиск и подготовка бинарного файла '<span class="math-inline">BINARY\_NAME' или архива pop\-v\*\.tar\.gz\.\.\."
-ARCHIVE\_PATH\=</span>(find /home /root -name "pop-v*.tar.gz" -type f -print -quit)
+echo "2.2 Поиск и подготовка бинарного файла '$BINARY_NAME' или архива pop-v*.tar.gz..."
+# Ищем архив без учёта регистра и архитектуры
+ARCHIVE_PATH=$(find /home /root -iname "pop-v*.tar.gz" -type f -print -quit)
 if [[ -n "$ARCHIVE_PATH" ]]; then
-    echo "    - Найден архив: <span class="math-inline">ARCHIVE\_PATH"
-TMP\_UNPACK\_DIR\="/tmp/pop\_unpack\_</span>$"
+    echo "    - Найден архив: $ARCHIVE_PATH"
+    TMP_UNPACK_DIR="/tmp/pop_unpack_$$"
     mkdir -p "$TMP_UNPACK_DIR"
     tar -xzf "$ARCHIVE_PATH" -C "$TMP_UNPACK_DIR"
     if [[ ! -f "$TMP_UNPACK_DIR/$BINARY_NAME" ]]; then
-        echo "[ОШИБКА] В архиве не найден бинарный файл '$BINARY_NAME'."
-        rm -rf "$TMP_UNPACK_DIR"
-        exit 1
+        # Попробуем найти бинарник внутри архива по имени pop*
+        BIN_FOUND=$(find "$TMP_UNPACK_DIR" -type f -name "pop*")
+        if [[ -n "$BIN_FOUND" ]]; then
+            mv "$BIN_FOUND" "$INSTALL_DIR/$BINARY_NAME"
+        else
+            echo "[ОШИБКА] В архиве не найден бинарный файл '$BINARY_NAME'."
+            rm -rf "$TMP_UNPACK_DIR"
+            exit 1
+        fi
+    else
+        mv "$TMP_UNPACK_DIR/$BINARY_NAME" "$INSTALL_DIR/$BINARY_NAME"
     fi
-    mv "$TMP_UNPACK_DIR/$BINARY_NAME" "$INSTALL_DIR/$BINARY_NAME"
     if [ $? -ne 0 ]; then
         echo "[ОШИБКА] Не удалось переместить бинарный файл из архива в $INSTALL_DIR."
         rm -rf "$TMP_UNPACK_DIR"
@@ -126,10 +134,10 @@ TMP\_UNPACK\_DIR\="/tmp/pop\_unpack\_</span>$"
     fi
     chmod +x "$INSTALL_DIR/$BINARY_NAME"
     rm -rf "$TMP_UNPACK_DIR"
-    echo "    - Бинарный файл извлечён из архива и перемещён в $INSTALL_DIR/<span class="math-inline">BINARY\_NAME\."
+    echo "    - Бинарный файл извлечён из архива и перемещён в $INSTALL_DIR/$BINARY_NAME."
 else
-\# \-\-\- Старый блок\: Поиск готового бинарника \-\-\-
-BINARY\_PATH\=</span>(find /home /root -name "$BINARY_NAME" -type f -print -quit) # Ищем в /home и /root
+    # --- Старый блок: Поиск готового бинарника ---
+    BINARY_PATH=$(find /home /root -name "$BINARY_NAME" -type f -print -quit)
     if [[ -z "$BINARY_PATH" ]]; then
         echo "[ОШИБКА] Ни архив pop-v*.tar.gz, ни бинарный файл '$BINARY_NAME' не найдены в /home или /root."
         echo "Пожалуйста, скачайте архив с https://download.pipe.network/ и поместите на сервер."
@@ -142,46 +150,48 @@ BINARY\_PATH\=</span>(find /home /root -name "$BINARY_NAME" -type f -print -quit
         exit 1
     fi
     chmod +x "$INSTALL_DIR/$BINARY_NAME"
-    echo "    - Бинарный файл перемещён в $INSTALL_DIR/<span class="math-inline">BINARY\_NAME и сделан исполняемым\."
+    echo "    - Бинарный файл перемещён в $INSTALL_DIR/$BINARY_NAME и сделан исполняемым."
 fi
-echo "\-\-\- Шаг 2 Завершен \-\-\-"
-\# \-\-\- 3\. Конфигурация \-\-\-
+
+echo "--- Шаг 2 Завершен ---"
+
+# --- 3. Конфигурация ---
 echo ""
-echo "\-\-\- Шаг 3\: Конфигурация \(config\.json\) \-\-\-"
-echo "Сейчас вам нужно будет ввести данные для конфигурационного файла\."
-echo "Некоторые значения имеют рекомендации\."
-\# Значения по умолчанию на случай сбоя ввода
-DEFAULT\_POP\_NAME\="default\-pop"
-DEFAULT\_POP\_LOCATION\="Unknown"
-DEFAULT\_MEMORY\_CACHE\_SIZE\_MB\=4096
-DEFAULT\_DISK\_CACHE\_SIZE\_GB\=100
-DEFAULT\_WORKERS\=0
-DEFAULT\_NODE\_NAME\="default\-node"
-DEFAULT\_IDENTITY\_NAME\="Default User"
-DEFAULT\_IDENTITY\_EMAIL\="default@example\.com"
-DEFAULT\_IDENTITY\_WEBSITE\=""
-DEFAULT\_IDENTITY\_DISCORD\=""
-DEFAULT\_IDENTITY\_TELEGRAM\=""
-DEFAULT\_IDENTITY\_SOLANA\_PUBKEY\=""
+echo "--- Шаг 3: Конфигурация (config.json) ---"
+echo "Сейчас вам нужно будет ввести данные для конфигурационного файла."
+echo "Некоторые значения имеют рекомендации."
+# Значения по умолчанию на случай сбоя ввода
+DEFAULT_POP_NAME="default-pop"
+DEFAULT_POP_LOCATION="Unknown"
+DEFAULT_MEMORY_CACHE_SIZE_MB=4096
+DEFAULT_DISK_CACHE_SIZE_GB=100
+DEFAULT_WORKERS=0
+DEFAULT_NODE_NAME="default-node"
+DEFAULT_IDENTITY_NAME="Default User"
+DEFAULT_IDENTITY_EMAIL="default@example.com"
+DEFAULT_IDENTITY_WEBSITE=""
+DEFAULT_IDENTITY_DISCORD=""
+DEFAULT_IDENTITY_TELEGRAM=""
+DEFAULT_IDENTITY_SOLANA_PUBKEY=""
 while true; do
-\# Запрос данных у пользователя
-read \-p "Введите имя вашего POP \(pop\_name, например, my\-frankfurt\-pop\)\: " user\_pop\_name
-read \-p "Введите локацию вашего POP \(pop\_location, например, Frankfurt, Germany\)\: " user\_pop\_location
-\# Получаем RAM в МБ и Диск в ГБ для рекомендаций
-TOTAL\_RAM\_MB\=</span>(grep MemTotal /proc/meminfo | awk '{print int(<span class="math-inline">2/1024\)\}'\)
-AVAIL\_DISK\_GB\=</span>(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
+# Запрос данных у пользователя
+read -p "Введите имя вашего POP (pop_name, например, my-frankfurt-pop): " user_pop_name
+read -p "Введите локацию вашего POP (pop_location, например, Frankfurt, Germany): " user_pop_location
+# Получаем RAM в МБ и Диск в ГБ для рекомендаций
+TOTAL_RAM_MB=$(grep MemTotal /proc/meminfo | awk '{print int($2/1024)}')
+AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
 
     echo "Рекомендации по памяти (RAM: ${TOTAL_RAM_MB}MB):"
     echo "  - Установите 50-70% от доступной RAM."
     echo "  - Например, для 16GB (16384MB) RAM, установите 8192-11468 MB."
     read -p "Размер кэша в памяти (memory_cache_size_mb): " user_memory_cache_size_mb
 
-    echo "Рекомендации по диску (Доступно: ${AVAIL_DISK_GB}GB в <span class="math-inline">INSTALL\_DIR\)\:"
-echo "  \- Оставьте как минимум 20% свободного места на диске\."
-echo "  \- Например, для 500GB диска, установите 350\-400 GB\."
-read \-p "Размер дискового кэша \(disk\_cache\_size\_gb\)\: " user\_disk\_cache\_size\_gb
-read \-p "Количество воркеров \(workers, 0\=автоопределение по CPU, рекомендуется\)\: " user\_workers
-user\_workers\=</span>{user_workers:-0}
+    echo "Рекомендации по диску (Доступно: ${AVAIL_DISK_GB}GB в $INSTALL_DIR):"
+    echo "  - Оставьте как минимум 20% свободного места на диске."
+    echo "  - Например, для 500GB диска, установите 350-400 GB."
+    read -p "Размер дискового кэша (disk_cache_size_gb): " user_disk_cache_size_gb
+    read -p "Количество воркеров (workers, 0=автоопределение по CPU, рекомендуется): " user_workers
+    user_workers=${user_workers:-0}
 
     read -p "Имя узла для идентификации (identity_config.node_name): " user_identity_node_name
     read -p "Ваше имя или название компании (identity_config.name): " user_identity_name
@@ -200,10 +210,10 @@ user\_workers\=</span>{user_workers:-0}
 
     # Создание config.json
     echo "3.1 Создание файла конфигурации $CONFIG_FILE..."
-    cat > "<span class="math-inline">CONFIG\_FILE" << EOL
-\{
-"pop\_name"\: "</span>{user_pop_name:-"<span class="math-inline">DEFAULT\_POP\_NAME"\}",
-"pop\_location"\: "</span>{user_pop_location:-"$DEFAULT_POP_LOCATION"}",
+    cat > "$CONFIG_FILE" << EOL
+{
+"pop_name": "${user_pop_name:-"$DEFAULT_POP_NAME"}",
+"pop_location": "${user_pop_location:-"$DEFAULT_POP_LOCATION"}",
   "server": {
     "host": "0.0.0.0",
     "port": 443,
@@ -213,21 +223,21 @@ user\_workers\=</span>{user_workers:-0}
   "cache_config": {
     "memory_cache_size_mb": ${user_memory_cache_size_mb:-"$DEFAULT_MEMORY_CACHE_SIZE_MB"},
     "disk_cache_path": "$CACHE_DIR",
-    "disk_cache_size_gb": ${user_disk_cache_size_gb:-"<span class="math-inline">DEFAULT\_DISK\_CACHE\_SIZE\_GB"\},
-"default\_ttl\_seconds"\: 86400,
-"respect\_origin\_headers"\: true,
-"max\_cacheable\_size\_mb"\: 1024
-\},
-"api\_endpoints"\: \{
-"base\_url"\: "https\://dataplane\.pipenetwork\.com"
-\},
-"identity\_config"\: \{
-"node\_name"\: "</span>{user_identity_node_name:-"<span class="math-inline">DEFAULT\_NODE\_NAME"\}",
-"name"\: "</span>{user_identity_name:-"<span class="math-inline">DEFAULT\_IDENTITY\_NAME"\}",
-"email"\: "</span>{user_identity_email:-"<span class="math-inline">DEFAULT\_IDENTITY\_EMAIL"\}",
-"website"\: "</span>{user_identity_website:-"<span class="math-inline">DEFAULT\_IDENTITY\_WEBSITE"\}",
-"discord"\: "</span>{user_identity_discord:-"<span class="math-inline">DEFAULT\_IDENTITY\_DISCORD"\}",
-"telegram"\: "</span>{user_identity_telegram:-"$DEFAULT_IDENTITY_TELEGRAM"}",
+    "disk_cache_size_gb": ${user_disk_cache_size_gb:-"$DEFAULT_DISK_CACHE_SIZE_GB"},
+"default_ttl_seconds": 86400,
+"respect_origin_headers": true,
+"max_cacheable_size_mb": 1024
+},
+"api_endpoints": {
+"base_url": "https://dataplane.pipenetwork.com"
+},
+"identity_config": {
+"node_name": "${user_identity_node_name:-"$DEFAULT_NODE_NAME"}",
+"name": "${user_identity_name:-"$DEFAULT_IDENTITY_NAME"}",
+"email": "${user_identity_email:-"$DEFAULT_IDENTITY_EMAIL"}",
+"website": "${user_identity_website:-"$DEFAULT_IDENTITY_WEBSITE"}",
+"discord": "${user_identity_discord:-"$DEFAULT_IDENTITY_DISCORD"}",
+"telegram": "${user_identity_telegram:-"$DEFAULT_IDENTITY_TELEGRAM"}",
     "solana_pubkey": "$user_identity_solana_pubkey"
   }
 }
@@ -240,7 +250,7 @@ EOL
     if [ $? -ne 0 ]; then
         echo "[ПРЕДУПРЕЖДЕНИЕ] Валидация конфигурации не удалась. Проверьте $CONFIG_FILE и вывод выше."
         read -p "Повторить ввод всех параметров? (y/N): " confirm_validation
-        if [[ "<span class="math-inline">confirm\_validation" \=\~ ^\[Yy\]</span> ]]; then
+        if [[ "$confirm_validation" =~ ^[Yy]$ ]]; then
             continue
         else
             echo "Установка прервана для исправления конфигурации."
