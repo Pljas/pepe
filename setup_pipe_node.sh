@@ -226,7 +226,7 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
     TMP_CONFIG="/tmp/config.json.$$"
     
     # Генерируем JSON с экранированными значениями
-    cat > "$TMP_CONFIG" << 'EOF'
+    cat > "$TMP_CONFIG" << EOF
 {
   "pop_name": "${json_pop_name}",
   "pop_location": "${json_pop_location}",
