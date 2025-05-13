@@ -209,37 +209,40 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
     done
 
     # Исправление генерации config.json
+    # Проверяем и устанавливаем значения по умолчанию, если пусто
+    : "${user_pop_name:=$DEFAULT_POP_NAME}"
+    : "${user_pop_location:=$DEFAULT_POP_LOCATION}"
+    : "${user_memory_cache_size_mb:=$DEFAULT_MEMORY_CACHE_SIZE_MB}"
+    : "${user_disk_cache_size_gb:=$DEFAULT_DISK_CACHE_SIZE_GB}"
+    : "${user_workers:=$DEFAULT_WORKERS}"
+    : "${user_identity_node_name:=$DEFAULT_NODE_NAME}"
+    : "${user_identity_name:=$DEFAULT_IDENTITY_NAME}"
+    : "${user_identity_email:=$DEFAULT_IDENTITY_EMAIL}"
+    : "${user_identity_website:=$DEFAULT_IDENTITY_WEBSITE}"
+    : "${user_identity_discord:=$DEFAULT_IDENTITY_DISCORD}"
+    : "${user_identity_telegram:=$DEFAULT_IDENTITY_TELEGRAM}"
+    : "${user_identity_solana_pubkey:=$DEFAULT_IDENTITY_SOLANA_PUBKEY}"
+
     echo "3.1 Создание файла конфигурации $CONFIG_FILE..."
-    
-    # Экранируем переменные для JSON
-    json_pop_name=$(printf '%s' "${user_pop_name:-$DEFAULT_POP_NAME}" | sed 's/"/\\"/g')
-    json_pop_location=$(printf '%s' "${user_pop_location:-$DEFAULT_POP_LOCATION}" | sed 's/"/\\"/g')
-    json_node_name=$(printf '%s' "${user_identity_node_name:-$DEFAULT_NODE_NAME}" | sed 's/"/\\"/g')
-    json_name=$(printf '%s' "${user_identity_name:-$DEFAULT_IDENTITY_NAME}" | sed 's/"/\\"/g')
-    json_email=$(printf '%s' "${user_identity_email:-$DEFAULT_IDENTITY_EMAIL}" | sed 's/"/\\"/g')
-    json_website=$(printf '%s' "${user_identity_website:-$DEFAULT_IDENTITY_WEBSITE}" | sed 's/"/\\"/g')
-    json_discord=$(printf '%s' "${user_identity_discord:-$DEFAULT_IDENTITY_DISCORD}" | sed 's/"/\\"/g')
-    json_telegram=$(printf '%s' "${user_identity_telegram:-$DEFAULT_IDENTITY_TELEGRAM}" | sed 's/"/\\"/g')
-    json_solana=$(printf '%s' "${user_identity_solana_pubkey:-$DEFAULT_IDENTITY_SOLANA_PUBKEY}" | sed 's/"/\\"/g')
     
     # Создаем временный файл для JSON
     TMP_CONFIG="/tmp/config.json.$$"
     
-    # Генерируем JSON с экранированными значениями
+    # Генерируем JSON напрямую, без промежуточных команд
     cat > "$TMP_CONFIG" << EOF
 {
-  "pop_name": "${json_pop_name}",
-  "pop_location": "${json_pop_location}",
+  "pop_name": "$user_pop_name",
+  "pop_location": "$user_pop_location",
   "server": {
     "host": "0.0.0.0",
     "port": 443,
     "http_port": 80,
-    "workers": ${user_workers:-$DEFAULT_WORKERS}
+    "workers": $user_workers
   },
   "cache_config": {
-    "memory_cache_size_mb": ${user_memory_cache_size_mb:-$DEFAULT_MEMORY_CACHE_SIZE_MB},
-    "disk_cache_path": "${CACHE_DIR}",
-    "disk_cache_size_gb": ${user_disk_cache_size_gb:-$DEFAULT_DISK_CACHE_SIZE_GB},
+    "memory_cache_size_mb": $user_memory_cache_size_mb,
+    "disk_cache_path": "$CACHE_DIR",
+    "disk_cache_size_gb": $user_disk_cache_size_gb,
     "default_ttl_seconds": 86400,
     "respect_origin_headers": true,
     "max_cacheable_size_mb": 1024
@@ -248,13 +251,13 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
     "base_url": "https://dataplane.pipenetwork.com"
   },
   "identity_config": {
-    "node_name": "${json_node_name}",
-    "name": "${json_name}",
-    "email": "${json_email}",
-    "website": "${json_website}",
-    "discord": "${json_discord}",
-    "telegram": "${json_telegram}",
-    "solana_pubkey": "${json_solana}"
+    "node_name": "$user_identity_node_name",
+    "name": "$user_identity_name",
+    "email": "$user_identity_email",
+    "website": "$user_identity_website",
+    "discord": "$user_identity_discord",
+    "telegram": "$user_identity_telegram",
+    "solana_pubkey": "$user_identity_solana_pubkey"
   }
 }
 EOF
