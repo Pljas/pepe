@@ -153,46 +153,46 @@ echo "--- Шаг 3: Конфигурация (config.json) ---"
 echo "Сейчас вам нужно будет ввести данные для конфигурационного файла."
 echo "Некоторые значения имеют рекомендации."
 
-# Запрос данных у пользователя
-read -p "Введите имя вашего POP (pop_name, например, my-frankfurt-pop): " pop_name
-read -p "Введите локацию вашего POP (pop_location, например, Frankfurt, Germany): " pop_location
-
-# Получаем RAM в МБ и Диск в ГБ для рекомендаций
-TOTAL_RAM_MB=$(grep MemTotal /proc/meminfo | awk '{print int($2/1024)}')
-AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
-
-echo "Рекомендации по памяти (RAM: ${TOTAL_RAM_MB}MB):"
-echo "  - Установите 50-70% от доступной RAM."
-echo "  - Например, для 16GB (16384MB) RAM, установите 8192-11468 MB."
-read -p "Размер кэша в памяти (memory_cache_size_mb): " memory_cache_size_mb
-
-echo "Рекомендации по диску (Доступно: ${AVAIL_DISK_GB}GB в $INSTALL_DIR):"
-echo "  - Оставьте как минимум 20% свободного места на диске."
-echo "  - Например, для 500GB диска, установите 350-400 GB."
-read -p "Размер дискового кэша (disk_cache_size_gb): " disk_cache_size_gb
-
-read -p "Количество воркеров (workers, 0=автоопределение по CPU, рекомендуется): " workers
-# Проверка, если ввод пустой, ставим 0
-workers=${workers:-0}
-
-read -p "Имя узла для идентификации (identity_config.node_name): " identity_node_name
-read -p "Ваше имя или название компании (identity_config.name): " identity_name
-read -p "Ваш контактный email (identity_config.email): " identity_email
-read -p "Ваш вебсайт (identity_config.website, можно оставить пустым): " identity_website
-read -p "Ваш Discord username (identity_config.discord, можно оставить пустым): " identity_discord
-read -p "Ваш Telegram handle (identity_config.telegram, можно оставить пустым): " identity_telegram
 while true; do
-    read -p "Ваш Solana адрес для наград (identity_config.solana_pubkey, ОБЯЗАТЕЛЬНО): " identity_solana_pubkey
-    if [[ -z "$identity_solana_pubkey" ]]; then
-        echo "   [ОШИБКА] Solana адрес обязателен для получения наград."
-    else
-        break
-    fi
-done
+    # Запрос данных у пользователя
+    read -p "Введите имя вашего POP (pop_name, например, my-frankfurt-pop): " pop_name
+    read -p "Введите локацию вашего POP (pop_location, например, Frankfurt, Germany): " pop_location
 
-# Создание config.json
-echo "3.1 Создание файла конфигурации $CONFIG_FILE..."
-cat > "$CONFIG_FILE" << EOL
+    # Получаем RAM в МБ и Диск в ГБ для рекомендаций
+    TOTAL_RAM_MB=$(grep MemTotal /proc/meminfo | awk '{print int($2/1024)}')
+    AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
+
+    echo "Рекомендации по памяти (RAM: ${TOTAL_RAM_MB}MB):"
+    echo "  - Установите 50-70% от доступной RAM."
+    echo "  - Например, для 16GB (16384MB) RAM, установите 8192-11468 MB."
+    read -p "Размер кэша в памяти (memory_cache_size_mb): " memory_cache_size_mb
+
+    echo "Рекомендации по диску (Доступно: ${AVAIL_DISK_GB}GB в $INSTALL_DIR):"
+    echo "  - Оставьте как минимум 20% свободного места на диске."
+    echo "  - Например, для 500GB диска, установите 350-400 GB."
+    read -p "Размер дискового кэша (disk_cache_size_gb): " disk_cache_size_gb
+
+    read -p "Количество воркеров (workers, 0=автоопределение по CPU, рекомендуется): " workers
+    workers=${workers:-0}
+
+    read -p "Имя узла для идентификации (identity_config.node_name): " identity_node_name
+    read -p "Ваше имя или название компании (identity_config.name): " identity_name
+    read -p "Ваш контактный email (identity_config.email): " identity_email
+    read -p "Ваш вебсайт (identity_config.website, можно оставить пустым): " identity_website
+    read -p "Ваш Discord username (identity_config.discord, можно оставить пустым): " identity_discord
+    read -p "Ваш Telegram handle (identity_config.telegram, можно оставить пустым): " identity_telegram
+    while true; do
+        read -p "Ваш Solana адрес для наград (identity_config.solana_pubkey, ОБЯЗАТЕЛЬНО): " identity_solana_pubkey
+        if [[ -z "$identity_solana_pubkey" ]]; then
+            echo "   [ОШИБКА] Solana адрес обязателен для получения наград."
+        else
+            break
+        fi
+    done
+
+    # Создание config.json
+    echo "3.1 Создание файла конфигурации $CONFIG_FILE..."
+    cat > "$CONFIG_FILE" << EOL
 {
   "pop_name": "$pop_name",
   "pop_location": "$pop_location",
@@ -225,22 +225,25 @@ cat > "$CONFIG_FILE" << EOL
 }
 EOL
 
-# Валидация конфига (если возможно)
-echo "3.2 Попытка валидации конфигурации..."
-# Устанавливаем владельца для запуска валидации
-chown $NODE_USER:$NODE_GROUP "$CONFIG_FILE"
-# Запускаем от имени пользователя popcache
-sudo -u $NODE_USER "$INSTALL_DIR/$BINARY_NAME" --config "$CONFIG_FILE" --validate-config
-if [ $? -ne 0 ]; then
-    echo "[ПРЕДУПРЕЖДЕНИЕ] Валидация конфигурации не удалась. Проверьте $CONFIG_FILE и вывод выше."
-    read -p "Продолжить несмотря на ошибку валидации? (y/N): " confirm_validation
-    if [[ ! "$confirm_validation" =~ ^[Yy]$ ]]; then
-        echo "Установка прервана для исправления конфигурации."
-        exit 1
+    # Валидация конфига (если возможно)
+    echo "3.2 Попытка валидации конфигурации..."
+    chown $NODE_USER:$NODE_GROUP "$CONFIG_FILE"
+    sudo -u $NODE_USER "$INSTALL_DIR/$BINARY_NAME" --config "$CONFIG_FILE" --validate-config
+    if [ $? -ne 0 ]; then
+        echo "[ПРЕДУПРЕЖДЕНИЕ] Валидация конфигурации не удалась. Проверьте $CONFIG_FILE и вывод выше."
+        read -p "Повторить ввод всех параметров? (y/N): " confirm_validation
+        if [[ "$confirm_validation" =~ ^[Yy]$ ]]; then
+            continue
+        else
+            echo "Установка прервана для исправления конфигурации."
+            exit 1
+        fi
+    else
+        echo "    - Конфигурация успешно прошла валидацию."
+        break
     fi
-else
-    echo "    - Конфигурация успешно прошла валидацию."
-fi
+
+done
 
 echo "--- Шаг 3 Завершен ---"
 
