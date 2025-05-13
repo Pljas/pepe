@@ -226,7 +226,7 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
     TMP_CONFIG="/tmp/config.json.$$"
     
     # Генерируем JSON с экранированными значениями
-    cat > "$TMP_CONFIG" << EOF
+    cat > "$TMP_CONFIG" << 'EOF'
 {
   "pop_name": "${json_pop_name}",
   "pop_location": "${json_pop_location}",
@@ -237,9 +237,9 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
     "workers": ${user_workers:-$DEFAULT_WORKERS}
   },
   "cache_config": {
-    "memory_cache_size_mb": $(echo ${user_memory_cache_size_mb:-$DEFAULT_MEMORY_CACHE_SIZE_MB}),
-    "disk_cache_path": "$(echo $CACHE_DIR)",
-    "disk_cache_size_gb": $(echo ${user_disk_cache_size_gb:-$DEFAULT_DISK_CACHE_SIZE_GB}),
+    "memory_cache_size_mb": ${user_memory_cache_size_mb:-$DEFAULT_MEMORY_CACHE_SIZE_MB},
+    "disk_cache_path": "${CACHE_DIR}",
+    "disk_cache_size_gb": ${user_disk_cache_size_gb:-$DEFAULT_DISK_CACHE_SIZE_GB},
     "default_ttl_seconds": 86400,
     "respect_origin_headers": true,
     "max_cacheable_size_mb": 1024
@@ -257,7 +257,7 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
     "solana_pubkey": "${json_solana}"
   }
 }
-EOL
+EOF
 
     # Проверяем, что временный файл создан успешно
     if [ $? -ne 0 ]; then
