@@ -208,36 +208,36 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
         fi
     done
 
-    # Создание config.json
+    # Исправление генерации config.json
     echo "3.1 Создание файла конфигурации $CONFIG_FILE..."
     cat > "$CONFIG_FILE" << EOL
 {
-"pop_name": "${user_pop_name:-"$DEFAULT_POP_NAME"}",
-"pop_location": "${user_pop_location:-"$DEFAULT_POP_LOCATION"}",
+  "pop_name": "${user_pop_name:-$DEFAULT_POP_NAME}",
+  "pop_location": "${user_pop_location:-$DEFAULT_POP_LOCATION}",
   "server": {
     "host": "0.0.0.0",
     "port": 443,
     "http_port": 80,
-    "workers": ${user_workers:-"$DEFAULT_WORKERS"}
+    "workers": ${user_workers:-$DEFAULT_WORKERS}
   },
   "cache_config": {
-    "memory_cache_size_mb": ${user_memory_cache_size_mb:-"$DEFAULT_MEMORY_CACHE_SIZE_MB"},
+    "memory_cache_size_mb": ${user_memory_cache_size_mb:-$DEFAULT_MEMORY_CACHE_SIZE_MB},
     "disk_cache_path": "$CACHE_DIR",
-    "disk_cache_size_gb": ${user_disk_cache_size_gb:-"$DEFAULT_DISK_CACHE_SIZE_GB"},
-"default_ttl_seconds": 86400,
-"respect_origin_headers": true,
-"max_cacheable_size_mb": 1024
-},
-"api_endpoints": {
-"base_url": "https://dataplane.pipenetwork.com"
-},
-"identity_config": {
-"node_name": "${user_identity_node_name:-"$DEFAULT_NODE_NAME"}",
-"name": "${user_identity_name:-"$DEFAULT_IDENTITY_NAME"}",
-"email": "${user_identity_email:-"$DEFAULT_IDENTITY_EMAIL"}",
-"website": "${user_identity_website:-"$DEFAULT_IDENTITY_WEBSITE"}",
-"discord": "${user_identity_discord:-"$DEFAULT_IDENTITY_DISCORD"}",
-"telegram": "${user_identity_telegram:-"$DEFAULT_IDENTITY_TELEGRAM"}",
+    "disk_cache_size_gb": ${user_disk_cache_size_gb:-$DEFAULT_DISK_CACHE_SIZE_GB},
+    "default_ttl_seconds": 86400,
+    "respect_origin_headers": true,
+    "max_cacheable_size_mb": 1024
+  },
+  "api_endpoints": {
+    "base_url": "https://dataplane.pipenetwork.com"
+  },
+  "identity_config": {
+    "node_name": "${user_identity_node_name:-$DEFAULT_NODE_NAME}",
+    "name": "${user_identity_name:-$DEFAULT_IDENTITY_NAME}",
+    "email": "${user_identity_email:-$DEFAULT_IDENTITY_EMAIL}",
+    "website": "${user_identity_website:-$DEFAULT_IDENTITY_WEBSITE}",
+    "discord": "${user_identity_discord:-$DEFAULT_IDENTITY_DISCORD}",
+    "telegram": "${user_identity_telegram:-$DEFAULT_IDENTITY_TELEGRAM}",
     "solana_pubkey": "$user_identity_solana_pubkey"
   }
 }
