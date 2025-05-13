@@ -201,7 +201,7 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
     read -p "Ваш Telegram handle (identity_config.telegram, можно оставить пустым): " user_identity_telegram
     while true; do
         read -p "Ваш Solana адрес для наград (identity_config.solana_pubkey, ОБЯЗАТЕЛЬНО): " user_identity_solana_pubkey
-        if [[ -z "$user_identity_solana_pubkey" ]]; then
+        if [[ -з "$user_identity_solana_pubkey" ]]; then
             echo "   [ОШИБКА] Solana адрес обязателен для получения наград."
         else
             break
@@ -210,20 +210,24 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
 
     # Исправление генерации config.json
     echo "3.1 Создание файла конфигурации $CONFIG_FILE..."
-    cat > "$CONFIG_FILE" << 'EOL'
+    # Создаем временный файл для подстановки значений
+    TMP_CONFIG="/tmp/config.json.$$"
+    
+    # Сначала создаем шаблон во временном файле
+    cat > "$TMP_CONFIG" << EOL
 {
-  "pop_name": "${user_pop_name:-$DEFAULT_POP_NAME}",
-  "pop_location": "${user_pop_location:-$DEFAULT_POP_LOCATION}",
+  "pop_name": "$(echo ${user_pop_name:-$DEFAULT_POP_NAME})",
+  "pop_location": "$(echo ${user_pop_location:-$DEFAULT_POP_LOCATION})",
   "server": {
     "host": "0.0.0.0",
     "port": 443,
     "http_port": 80,
-    "workers": ${user_workers:-$DEFAULT_WORKERS}
+    "workers": $(echo ${user_workers:-$DEFAULT_WORKERS})
   },
   "cache_config": {
-    "memory_cache_size_mb": ${user_memory_cache_size_mb:-$DEFAULT_MEMORY_CACHE_SIZE_MB},
-    "disk_cache_path": "$CACHE_DIR",
-    "disk_cache_size_gb": ${user_disk_cache_size_gb:-$DEFAULT_DISK_CACHE_SIZE_GB},
+    "memory_cache_size_mb": $(echo ${user_memory_cache_size_mb:-$DEFAULT_MEMORY_CACHE_SIZE_MB}),
+    "disk_cache_path": "$(echo $CACHE_DIR)",
+    "disk_cache_size_gb": $(echo ${user_disk_cache_size_gb:-$DEFAULT_DISK_CACHE_SIZE_GB}),
     "default_ttl_seconds": 86400,
     "respect_origin_headers": true,
     "max_cacheable_size_mb": 1024
@@ -232,16 +236,30 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
     "base_url": "https://dataplane.pipenetwork.com"
   },
   "identity_config": {
-    "node_name": "${user_identity_node_name:-$DEFAULT_NODE_NAME}",
-    "name": "${user_identity_name:-$DEFAULT_IDENTITY_NAME}",
-    "email": "${user_identity_email:-$DEFAULT_IDENTITY_EMAIL}",
-    "website": "${user_identity_website:-$DEFAULT_IDENTITY_WEBSITE}",
-    "discord": "${user_identity_discord:-$DEFAULT_IDENTITY_DISCORD}",
-    "telegram": "${user_identity_telegram:-$DEFAULT_IDENTITY_TELEGRAM}",
-    "solana_pubkey": "${user_identity_solana_pubkey:-$DEFAULT_IDENTITY_SOLANA_PUBKEY}"
+    "node_name": "$(echo ${user_identity_node_name:-$DEFAULT_NODE_NAME})",
+    "name": "$(echo ${user_identity_name:-$DEFAULT_IDENTITY_NAME})",
+    "email": "$(echo ${user_identity_email:-$DEFAULT_IDENTITY_EMAIL})",
+    "website": "$(echo ${user_identity_website:-$DEFAULT_IDENTITY_WEBSITE})",
+    "discord": "$(echo ${user_identity_discord:-$DEFAULT_IDENTITY_DISCORD})",
+    "telegram": "$(echo ${user_identity_telegram:-$DEFAULT_IDENTITY_TELEGRAM})",
+    "solana_pubkey": "$(echo ${user_identity_solana_pubkey:-$DEFAULT_IDENTITY_SOLANA_PUBKEY})"
   }
 }
 EOL
+
+    # Проверяем, что временный файл создан успешно
+    if [ $? -ne 0 ]; then
+        echo "[ОШИБКА] Не удалось создать временный файл конфигурации."
+        exit 1
+    fi
+
+    # Копируем временный файл в целевой с нужными правами
+    mv "$TMP_CONFIG" "$CONFIG_FILE"
+    if [ $? -ne 0 ]; then
+        echo "[ОШИБКА] Не удалось переместить конфигурацию в $CONFIG_FILE"
+        rm -f "$TMP_CONFIG"
+        exit 1
+    fi
 
     # Валидация конфига (если возможно)
     echo "3.2 Попытка валидации конфигурации..."
