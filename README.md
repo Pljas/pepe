@@ -13,14 +13,7 @@
 3. **Скопируйте архив на сервер**  
    Поместите скачанный архив pop-v@.3.0-Linux-x.tar.gz в домашнюю директорию пользователя на сервере.
 
-4. **Запустите установку одной командой**  
-   (скрипт скачает и выполнит последнюю версию из репозитория)
-
-   ```sh
-   curl -fsSL https://raw.githubusercontent.com/Pljas/pepe/refs/heads/main/setup_pipe_node.sh | sudo bash
-   ```
-
-   Или скачайте скрипт вручную и запустите:
+4. **Запустите установку командой**  
    ```sh
    wget https://raw.githubusercontent.com/Pljas/pepe/refs/heads/main/setup_pipe_node.sh
    sudo bash setup_pipe_node.sh
