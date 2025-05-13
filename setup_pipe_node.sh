@@ -290,7 +290,13 @@ EOF
 
     # Валидация конфига (если возможно)
     echo "3.2 Попытка валидации конфигурации..."
-    chown $NODE_USER:$NODE_GROUP "$CONFIG_FILE"
+    # Создаем директорию кэша и устанавливаем права
+    mkdir -p "$CACHE_DIR"
+    chown -R $NODE_USER:$NODE_GROUP "$INSTALL_DIR"
+    chmod -R 750 "$INSTALL_DIR"
+    chmod 640 "$CONFIG_FILE"
+
+    # Теперь запускаем валидацию
     sudo -u $NODE_USER "$INSTALL_DIR/$BINARY_NAME" --config "$CONFIG_FILE" --validate-config
     if [ $? -ne 0 ]; then
         echo "[ПРЕДУПРЕЖДЕНИЕ] Валидация конфигурации не удалась. Проверьте $CONFIG_FILE и вывод выше."
