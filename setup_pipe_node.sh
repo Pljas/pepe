@@ -161,18 +161,18 @@ echo "--- Шаг 3: Конфигурация (config.json) ---"
 echo "Сейчас вам нужно будет ввести данные для конфигурационного файла."
 echo "Некоторые значения имеют рекомендации."
 # Значения по умолчанию на случай сбоя ввода
-DEFAULT_POP_NAME="default-pop"
-DEFAULT_POP_LOCATION="Unknown"
+DEFAULT_POP_NAME="your-pop-name"
+DEFAULT_POP_LOCATION="Your Location, Country"
 DEFAULT_MEMORY_CACHE_SIZE_MB=4096
 DEFAULT_DISK_CACHE_SIZE_GB=100
-DEFAULT_WORKERS=0
-DEFAULT_NODE_NAME="default-node"
-DEFAULT_IDENTITY_NAME="Default User"
-DEFAULT_IDENTITY_EMAIL="default@example.com"
-DEFAULT_IDENTITY_WEBSITE=""
-DEFAULT_IDENTITY_DISCORD=""
-DEFAULT_IDENTITY_TELEGRAM=""
-DEFAULT_IDENTITY_SOLANA_PUBKEY=""
+DEFAULT_WORKERS=40
+DEFAULT_NODE_NAME="your-node-name"
+DEFAULT_IDENTITY_NAME="Your Name"
+DEFAULT_IDENTITY_EMAIL="your.email@example.com"
+DEFAULT_IDENTITY_WEBSITE="https://your-website.com"
+DEFAULT_IDENTITY_DISCORD="your_discord_username"
+DEFAULT_IDENTITY_TELEGRAM="your_telegram_handle"
+DEFAULT_IDENTITY_SOLANA_PUBKEY="YOUR_SOLANA_WALLET_ADDRESS_FOR_REWARDS"
 while true; do
 # Запрос данных у пользователя
 read -p "Введите имя вашего POP (pop_name, например, my-frankfurt-pop): " user_pop_name
@@ -210,7 +210,7 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
 
     # Исправление генерации config.json
     echo "3.1 Создание файла конфигурации $CONFIG_FILE..."
-    cat > "$CONFIG_FILE" << EOL
+    cat > "$CONFIG_FILE" << 'EOL'
 {
   "pop_name": "${user_pop_name:-$DEFAULT_POP_NAME}",
   "pop_location": "${user_pop_location:-$DEFAULT_POP_LOCATION}",
@@ -238,7 +238,7 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
     "website": "${user_identity_website:-$DEFAULT_IDENTITY_WEBSITE}",
     "discord": "${user_identity_discord:-$DEFAULT_IDENTITY_DISCORD}",
     "telegram": "${user_identity_telegram:-$DEFAULT_IDENTITY_TELEGRAM}",
-    "solana_pubkey": "$user_identity_solana_pubkey"
+    "solana_pubkey": "${user_identity_solana_pubkey:-$DEFAULT_IDENTITY_SOLANA_PUBKEY}"
   }
 }
 EOL
