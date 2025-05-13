@@ -201,7 +201,7 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
     read -p "Ваш Telegram handle (identity_config.telegram, можно оставить пустым): " user_identity_telegram
     while true; do
         read -p "Ваш Solana адрес для наград (identity_config.solana_pubkey, ОБЯЗАТЕЛЬНО): " user_identity_solana_pubkey
-        if [[ -з "$user_identity_solana_pubkey" ]]; then
+        if [[ -z "$user_identity_solana_pubkey" ]]; then
             echo "   [ОШИБКА] Solana адрес обязателен для получения наград."
         else
             break
