@@ -210,19 +210,31 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
 
     # Исправление генерации config.json
     echo "3.1 Создание файла конфигурации $CONFIG_FILE..."
-    # Создаем временный файл для подстановки значений
+    
+    # Экранируем переменные для JSON
+    json_pop_name=$(printf '%s' "${user_pop_name:-$DEFAULT_POP_NAME}" | sed 's/"/\\"/g')
+    json_pop_location=$(printf '%s' "${user_pop_location:-$DEFAULT_POP_LOCATION}" | sed 's/"/\\"/g')
+    json_node_name=$(printf '%s' "${user_identity_node_name:-$DEFAULT_NODE_NAME}" | sed 's/"/\\"/g')
+    json_name=$(printf '%s' "${user_identity_name:-$DEFAULT_IDENTITY_NAME}" | sed 's/"/\\"/g')
+    json_email=$(printf '%s' "${user_identity_email:-$DEFAULT_IDENTITY_EMAIL}" | sed 's/"/\\"/g')
+    json_website=$(printf '%s' "${user_identity_website:-$DEFAULT_IDENTITY_WEBSITE}" | sed 's/"/\\"/g')
+    json_discord=$(printf '%s' "${user_identity_discord:-$DEFAULT_IDENTITY_DISCORD}" | sed 's/"/\\"/g')
+    json_telegram=$(printf '%s' "${user_identity_telegram:-$DEFAULT_IDENTITY_TELEGRAM}" | sed 's/"/\\"/g')
+    json_solana=$(printf '%s' "${user_identity_solana_pubkey:-$DEFAULT_IDENTITY_SOLANA_PUBKEY}" | sed 's/"/\\"/g')
+    
+    # Создаем временный файл для JSON
     TMP_CONFIG="/tmp/config.json.$$"
     
-    # Сначала создаем шаблон во временном файле
-    cat > "$TMP_CONFIG" << EOL
+    # Генерируем JSON с экранированными значениями
+    cat > "$TMP_CONFIG" << EOF
 {
-  "pop_name": "$(echo ${user_pop_name:-$DEFAULT_POP_NAME})",
-  "pop_location": "$(echo ${user_pop_location:-$DEFAULT_POP_LOCATION})",
+  "pop_name": "${json_pop_name}",
+  "pop_location": "${json_pop_location}",
   "server": {
     "host": "0.0.0.0",
     "port": 443,
     "http_port": 80,
-    "workers": $(echo ${user_workers:-$DEFAULT_WORKERS})
+    "workers": ${user_workers:-$DEFAULT_WORKERS}
   },
   "cache_config": {
     "memory_cache_size_mb": $(echo ${user_memory_cache_size_mb:-$DEFAULT_MEMORY_CACHE_SIZE_MB}),
@@ -236,13 +248,13 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
     "base_url": "https://dataplane.pipenetwork.com"
   },
   "identity_config": {
-    "node_name": "$(echo ${user_identity_node_name:-$DEFAULT_NODE_NAME})",
-    "name": "$(echo ${user_identity_name:-$DEFAULT_IDENTITY_NAME})",
-    "email": "$(echo ${user_identity_email:-$DEFAULT_IDENTITY_EMAIL})",
-    "website": "$(echo ${user_identity_website:-$DEFAULT_IDENTITY_WEBSITE})",
-    "discord": "$(echo ${user_identity_discord:-$DEFAULT_IDENTITY_DISCORD})",
-    "telegram": "$(echo ${user_identity_telegram:-$DEFAULT_IDENTITY_TELEGRAM})",
-    "solana_pubkey": "$(echo ${user_identity_solana_pubkey:-$DEFAULT_IDENTITY_SOLANA_PUBKEY})"
+    "node_name": "${json_node_name}",
+    "name": "${json_name}",
+    "email": "${json_email}",
+    "website": "${json_website}",
+    "discord": "${json_discord}",
+    "telegram": "${json_telegram}",
+    "solana_pubkey": "${json_solana}"
   }
 }
 EOL
@@ -250,6 +262,13 @@ EOL
     # Проверяем, что временный файл создан успешно
     if [ $? -ne 0 ]; then
         echo "[ОШИБКА] Не удалось создать временный файл конфигурации."
+        exit 1
+    fi
+
+    # Проверяем валидность JSON перед копированием
+    if ! jq empty "$TMP_CONFIG" 2>/dev/null; then
+        echo "[ОШИБКА] Сгенерированный JSON невалиден. Проверьте входные данные."
+        rm -f "$TMP_CONFIG"
         exit 1
     fi
 
