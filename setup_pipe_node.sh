@@ -53,9 +53,9 @@ else
 fi
 
 # Установка зависимостей
-echo "1.2 Установка необходимых зависимостей (libssl-dev, ca-certificates)..."
+echo "1.2 Установка необходимых зависимостей (libssl-dev, ca-certificates, jq)..."
 apt update > /dev/null
-apt install -y libssl-dev ca-certificates
+apt install -y libssl-dev ca-certificates jq
 if [ $? -ne 0 ]; then
     echo "[ОШИБКА] Не удалось установить зависимости. Проверьте вывод apt."
     exit 1
@@ -266,10 +266,15 @@ EOL
     fi
 
     # Проверяем валидность JSON перед копированием
-    if ! jq empty "$TMP_CONFIG" 2>/dev/null; then
-        echo "[ОШИБКА] Сгенерированный JSON невалиден. Проверьте входные данные."
-        rm -f "$TMP_CONFIG"
-        exit 1
+    if command -v jq >/dev/null 2>&1; then
+        if ! jq empty "$TMP_CONFIG" 2>/dev/null; then
+            echo "[ОШИБКА] Сгенерированный JSON невалиден. Проверьте входные данные."
+            cat "$TMP_CONFIG"
+            rm -f "$TMP_CONFIG"
+            exit 1
+        fi
+    else
+        echo "[ПРЕДУПРЕЖДЕНИЕ] jq не установлен, пропускаем валидацию JSON."
     fi
 
     # Копируем временный файл в целевой с нужными правами
