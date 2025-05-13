@@ -241,7 +241,7 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
   },
   "cache_config": {
     "memory_cache_size_mb": $user_memory_cache_size_mb,
-    "disk_cache_path": "$CACHE_DIR",
+    "disk_cache_path": "./cache",
     "disk_cache_size_gb": $user_disk_cache_size_gb,
     "default_ttl_seconds": 86400,
     "respect_origin_headers": true,
@@ -290,11 +290,15 @@ EOF
 
     # Валидация конфига (если возможно)
     echo "3.2 Попытка валидации конфигурации..."
-    # Создаем директорию кэша и устанавливаем права
+    # Создаем директории и устанавливаем права
+    echo "    - Проверка и установка прав доступа..."
     mkdir -p "$CACHE_DIR"
-    chown -R $NODE_USER:$NODE_GROUP "$INSTALL_DIR"
-    chmod -R 750 "$INSTALL_DIR"
+    chown -R $NODE_USER:$NODE_GROUP "$INSTALL_DIR" "$CACHE_DIR" "$LOG_DIR"
+    chmod -R 750 "$INSTALL_DIR" "$CACHE_DIR" "$LOG_DIR"
     chmod 640 "$CONFIG_FILE"
+    chmod 750 "$INSTALL_DIR/$BINARY_NAME"
+
+    echo "    - Все права доступа установлены"
 
     # Теперь запускаем валидацию
     sudo -u $NODE_USER "$INSTALL_DIR/$BINARY_NAME" --config "$CONFIG_FILE" --validate-config
