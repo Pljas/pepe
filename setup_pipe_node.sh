@@ -163,6 +163,7 @@ echo "Некоторые значения имеют рекомендации."
 # Значения по умолчанию на случай сбоя ввода
 DEFAULT_POP_NAME="your-pop-name"
 DEFAULT_POP_LOCATION="Your Location, Country"
+DEFAULT_INVITE_CODE="Enter your Invite Code"
 DEFAULT_MEMORY_CACHE_SIZE_MB=4096
 DEFAULT_DISK_CACHE_SIZE_GB=100
 DEFAULT_WORKERS=40
@@ -177,6 +178,16 @@ while true; do
 # Запрос данных у пользователя
 read -p "Введите имя вашего POP (pop_name, например, my-frankfurt-pop): " user_pop_name
 read -p "Введите локацию вашего POP (pop_location, например, Frankfurt, Germany): " user_pop_location
+
+while true; do
+    read -p "Введите ваш invite code (ОБЯЗАТЕЛЬНО): " user_invite_code
+    if [[ -z "$user_invite_code" ]]; then
+        echo "   [ОШИБКА] Invite code обязателен. Получите его на https://airtable.com/apph9N7T0WlrPqnyc/pagSLmmUFNFbnKVZh/form"
+    else
+        break
+    fi
+done
+
 # Получаем RAM в МБ и Диск в ГБ для рекомендаций
 TOTAL_RAM_MB=$(grep MemTotal /proc/meminfo | awk '{print int($2/1024)}')
 AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
@@ -184,12 +195,12 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
     echo "Рекомендации по памяти (Доступно RAM: ${TOTAL_RAM_MB}MB):"
     echo "  - Установите 50-70% от доступной RAM."
     echo "  - Например, для 16GB (16384MB) RAM, установите 8192-11468 MB."
-    read -p "Размер кэша в памяти (memory_cache_size_mb): " user_memory_cache_size_mb
+    read -p "Размер кэша в памяти (memory_cache_size_mb). Укажите число: " user_memory_cache_size_mb
 
     echo "Рекомендации по диску (Доступно: ${AVAIL_DISK_GB}GB в $INSTALL_DIR):"
     echo "  - Оставьте как минимум 20% свободного места на диске."
     echo "  - Например, для 500GB диска, установите 350-400 GB."
-    read -p "Размер дискового кэша (disk_cache_size_gb): " user_disk_cache_size_gb
+    read -p "Размер дискового кэша (disk_cache_size_gb). Укажите число: " user_disk_cache_size_gb
     read -p "Количество воркеров (workers, 0=автоопределение по CPU, рекомендуется): " user_workers
     user_workers=${user_workers:-0}
 
@@ -212,6 +223,7 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
     # Проверяем и устанавливаем значения по умолчанию, если пусто
     : "${user_pop_name:=$DEFAULT_POP_NAME}"
     : "${user_pop_location:=$DEFAULT_POP_LOCATION}"
+    : "${user_invite_code:=$DEFAULT_INVITE_CODE}"
     : "${user_memory_cache_size_mb:=$DEFAULT_MEMORY_CACHE_SIZE_MB}"
     : "${user_disk_cache_size_gb:=$DEFAULT_DISK_CACHE_SIZE_GB}"
     : "${user_workers:=$DEFAULT_WORKERS}"
@@ -233,6 +245,7 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
 {
   "pop_name": "$user_pop_name",
   "pop_location": "$user_pop_location",
+  "invite_code": "$user_invite_code",
   "server": {
     "host": "0.0.0.0",
     "port": 443,
