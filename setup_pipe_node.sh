@@ -254,7 +254,7 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
   },
   "cache_config": {
     "memory_cache_size_mb": $user_memory_cache_size_mb,
-    "disk_cache_path": "./cache",
+    "disk_cache_path": "/opt/popcache/cache",
     "disk_cache_size_gb": $user_disk_cache_size_gb,
     "default_ttl_seconds": 86400,
     "respect_origin_headers": true,
