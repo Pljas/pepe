@@ -5,22 +5,28 @@
 ## Быстрый старт
 
 1. **Получите Invite Code**  
+
    Зарегистрируйтесь по [ссылке Airtable](https://airtable.com/apph9N7T0WlrPqnyc/pagSLmmUFNFbnKVZh/form).
    Код понадобится как для скачивания бинарного файла, так и для конфигурации ноды.
 
 2. **Скачайте бинарный файл**  
+
    - Перейдите на https://download.pipe.network/
    - Используйте полученный invite code
    - Скачайте архив `pop-v*.tar.gz` для вашей системы
 
 3. **Скопируйте архив на сервер**  
+
    Поместите скачанный архив в домашнюю директорию на сервере:
+
    ```sh
    scp pop-v*.tar.gz user@your-server:~
    ```
 
 4. **Установите ноду**  
+
    На сервере выполните:
+
    ```sh
    # Скачать актуальную версию скрипта (или обновить существующую)
    wget -O setup_pipe_node.sh https://raw.githubusercontent.com/Pljas/pepe/refs/heads/main/setup_pipe_node.sh
@@ -37,6 +43,7 @@
 ## Описание
 
 Скрипт автоматически:
+
 - Создаёт пользователя и группу `popcache`
 - Устанавливает необходимые зависимости (`libssl-dev`, `ca-certificates`, `jq`)
 - Оптимизирует системные настройки (sysctl, лимиты файлов)
@@ -47,6 +54,7 @@
 - Настраивает ротацию логов
 
 ## Требования
+
 - Debian/Ubuntu
 - Права root (sudo)
 - Свободное место на диске (100+ ГБ)
@@ -58,10 +66,46 @@
 - Остановить: `sudo systemctl stop popcache`
 - Запустить: `sudo systemctl start popcache`
 - Перезапустить: `sudo systemctl restart popcache`
-- Логи: `sudo journalctl -u popcache -f -n 100`
+- Логи через systemd: `sudo journalctl -u popcache -f -n 100`
+
+## Просмотр логов
+
+- В реальном времени:
+
+  ```sh
+  tail -f /opt/popcache/logs/stdout.log
+  tail -f /opt/popcache/logs/stderr.log
+  ```
+
+- Через systemd:
+
+  ```sh
+  sudo journalctl -u popcache
+  ```
+
+## Мониторинг состояния и метрик
+
+- Проверить состояние:
+
+  ```sh
+  curl http://localhost/state
+  ```
+
+- Проверить метрики:
+
+  ```sh
+  curl http://localhost/metrics
+  ```
+
+- Проверить здоровье:
+
+  ```sh
+  curl http://localhost/health
+  ```
 
 ---
 
 **Внимание:**
+
 - Не запускайте скрипт повторно без необходимости — он перезапишет настройки и сервис.
 - Все действия выполняются на ваш страх и риск.

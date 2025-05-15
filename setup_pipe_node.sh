@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # --- Скрипт для установки и настройки POP Cache Node ---
 # Предназначен для Debian/Ubuntu систем.
@@ -104,6 +105,13 @@ mkdir -p "$LOG_DIR"
 mkdir -p "$CACHE_DIR"
 echo "    - Директории созданы."
 
+# Проверка свободного места перед созданием кэша (20% свободно)
+AVAIL_DISK_PERCENT=$(df --output=pcent "$INSTALL_DIR" | tail -1 | tr -dc '0-9')
+if [ "$AVAIL_DISK_PERCENT" -ge 80 ]; then
+    echo "[ОШИБКА] На диске недостаточно свободного места для кэша (менее 20% свободно)."
+    exit 1
+fi
+
 # Перемещение и проверка бинарного файла
 # --- Новый блок: Поиск и распаковка архива, если найден ---
 echo "2.2 Поиск и подготовка бинарного файла '$BINARY_NAME' или архива pop-v*.tar.gz..."
@@ -118,14 +126,14 @@ if [[ -n "$ARCHIVE_PATH" ]]; then
         # Попробуем найти бинарник внутри архива по имени pop*
         BIN_FOUND=$(find "$TMP_UNPACK_DIR" -type f -name "pop*")
         if [[ -n "$BIN_FOUND" ]]; then
-            mv "$BIN_FOUND" "$INSTALL_DIR/$BINARY_NAME"
+            mv -f "$BIN_FOUND" "$INSTALL_DIR/$BINARY_NAME"
         else
             echo "[ОШИБКА] В архиве не найден бинарный файл '$BINARY_NAME'."
             rm -rf "$TMP_UNPACK_DIR"
             exit 1
         fi
     else
-        mv "$TMP_UNPACK_DIR/$BINARY_NAME" "$INSTALL_DIR/$BINARY_NAME"
+        mv -f "$TMP_UNPACK_DIR/$BINARY_NAME" "$INSTALL_DIR/$BINARY_NAME"
     fi
     if [ $? -ne 0 ]; then
         echo "[ОШИБКА] Не удалось переместить бинарный файл из архива в $INSTALL_DIR."
@@ -133,6 +141,24 @@ if [[ -n "$ARCHIVE_PATH" ]]; then
         exit 1
     fi
     chmod +x "$INSTALL_DIR/$BINARY_NAME"
+    # Добавляем capability для привилегированных портов (80, 443)
+    if ! command -v setcap >/dev/null 2>&1; then
+        echo "    - Утилита setcap не найдена, устанавливаем..."
+        apt update > /dev/null
+        apt install -y libcap2-bin
+        if [ $? -ne 0 ]; then
+            echo "[ОШИБКА] Не удалось установить libcap2-bin для setcap."
+            exit 1
+        fi
+    fi
+    setcap 'cap_net_bind_service=+ep' "$INSTALL_DIR/$BINARY_NAME"
+    if [ $? -ne 0 ]; then
+        echo "[ОШИБКА] Не удалось установить capability cap_net_bind_service для $INSTALL_DIR/$BINARY_NAME."
+        echo "        Приложение не сможет слушать порты 80/443 без root."
+        exit 1
+    else
+        echo "    - Capability cap_net_bind_service успешно установлена для $INSTALL_DIR/$BINARY_NAME."
+    fi
     rm -rf "$TMP_UNPACK_DIR"
     echo "    - Бинарный файл извлечён из архива и перемещён в $INSTALL_DIR/$BINARY_NAME."
 else
@@ -144,12 +170,30 @@ else
         exit 1
     fi
     echo "    - Бинарный файл найден: $BINARY_PATH"
-    mv "$BINARY_PATH" "$INSTALL_DIR/$BINARY_NAME"
+    mv -f "$BINARY_PATH" "$INSTALL_DIR/$BINARY_NAME"
     if [ $? -ne 0 ]; then
         echo "[ОШИБКА] Не удалось переместить бинарный файл в $INSTALL_DIR."
         exit 1
     fi
     chmod +x "$INSTALL_DIR/$BINARY_NAME"
+    # Добавляем capability для привилегированных портов (80, 443)
+    if ! command -v setcap >/dev/null 2>&1; then
+        echo "    - Утилита setcap не найдена, устанавливаем..."
+        apt update > /dev/null
+        apt install -y libcap2-bin
+        if [ $? -ne 0 ]; then
+            echo "[ОШИБКА] Не удалось установить libcap2-bin для setcap."
+            exit 1
+        fi
+    fi
+    setcap 'cap_net_bind_service=+ep' "$INSTALL_DIR/$BINARY_NAME"
+    if [ $? -ne 0 ]; then
+        echo "[ОШИБКА] Не удалось установить capability cap_net_bind_service для $INSTALL_DIR/$BINARY_NAME."
+        echo "        Приложение не сможет слушать порты 80/443 без root."
+        exit 1
+    else
+        echo "    - Capability cap_net_bind_service успешно установлена для $INSTALL_DIR/$BINARY_NAME."
+    fi
     echo "    - Бинарный файл перемещён в $INSTALL_DIR/$BINARY_NAME и сделан исполняемым."
 fi
 
@@ -254,7 +298,7 @@ AVAIL_DISK_GB=$(df -BG "$INSTALL_DIR" | awk 'NR==2 {print $4}' | sed 's/G//')
   },
   "cache_config": {
     "memory_cache_size_mb": $user_memory_cache_size_mb,
-    "disk_cache_path": "/opt/popcache/cache",
+    "disk_cache_path": "./cache",
     "disk_cache_size_gb": $user_disk_cache_size_gb,
     "default_ttl_seconds": 86400,
     "respect_origin_headers": true,
@@ -314,7 +358,7 @@ EOF
     echo "    - Все права доступа установлены"
 
     # Теперь запускаем валидацию
-    sudo -u $NODE_USER "$INSTALL_DIR/$BINARY_NAME" --config "$CONFIG_FILE" --validate-config
+    sudo -u $NODE_USER sh -c 'cd "$INSTALL_DIR" && ./"$BINARY_NAME" --config "$CONFIG_FILE" --validate-config'
     if [ $? -ne 0 ]; then
         echo "[ПРЕДУПРЕЖДЕНИЕ] Валидация конфигурации не удалась. Проверьте $CONFIG_FILE и вывод выше."
         read -p "Повторить ввод всех параметров? (y/N): " confirm_validation
@@ -398,6 +442,9 @@ ${INSTALL_DIR}/logs/*.log {
     compress
     delaycompress
     notifempty
+    dateext
+    maxsize 100M
+    su ${NODE_USER} ${NODE_GROUP}
     create 0640 ${NODE_USER} ${NODE_GROUP}
     sharedscripts
     postrotate
